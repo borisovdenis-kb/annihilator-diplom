@@ -1,8 +1,6 @@
-from time import time
-
 import pycuda.driver as drv
+from time import time
 from pycuda.compiler import SourceModule
-
 from src.utility.external_func import *
 
 L = 32

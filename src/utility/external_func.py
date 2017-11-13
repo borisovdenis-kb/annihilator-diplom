@@ -54,7 +54,7 @@ class MathUtility:
         return numpy.array(vectors)
 
     @staticmethod
-    def fill_input_matrix_tst_gpu(vectors_amount, vector_length, file="resources/input/func_in_gpu.txt"):
+    def get_matrix_with_test_data_gpu(vectors_amount, vector_length, outfile="resources/input/func_in_gpu.txt"):
         """
             Функция заполнения матриц для gpu.
             Матрица имеет вид:
@@ -68,7 +68,7 @@ class MathUtility:
             булевой функции.
             :param vectors_amount: количество векторов
             :param vector_length: длина вектора
-            :param file: 
+            :param outfile: 
         """
         big_matrix = numpy.random.randint(1, size=(vectors_amount * vector_length, vector_length), dtype=int)
 
@@ -78,18 +78,18 @@ class MathUtility:
             big_matrix[i][4] = 1
             big_matrix[i][7] = 1
 
-        numpy.savetxt(file, big_matrix, fmt='%1.0f')
+        numpy.savetxt(outfile, big_matrix, fmt='%1.0f')
 
         return big_matrix
 
     @staticmethod
-    def fill_input_matrix_tst_cpu(vectors_amount, vector_length):
+    def get_matrix_with_test_data_cpu(vectors_amount, vector_length):
         """
             Функция заполнения матриц для сpu.
             :param vectors_amount: количество векторов
             :param vector_length: длина вектора
         """
-        mat_list = []
+        list_of_matrix = []
 
         for i in range(vectors_amount):
             mat = numpy.random.randint(1, size=(vector_length, vector_length), dtype=int)
@@ -100,35 +100,35 @@ class MathUtility:
                 mat[j][4] = 1
                 mat[j][7] = 1
 
-            mat_list.append(mat)
+            list_of_matrix.append(mat)
 
-        return mat_list
+        return list_of_matrix
 
     @staticmethod
     def dim(vector):
         return len(vector)
 
     @staticmethod
-    def all_nulling_vectors(vector):
+    def find_all_nulling_vectors(vector):
         # для заданного вектора v находит все возможные векторы z
         # такие что, если v[i] = 1, z[i] = 0; если v[i] = 0, z[i] = 0 or 1
         # кроме нулевого
         # res = [[1,0,1,0], ...] - список списков.
-        N = MathUtility.dim(vector)
-        n = int(''.join([str(x) for x in vector]), 2)
+        n = MathUtility.dim(vector)
+        vector_in_int = int(''.join([str(x) for x in vector]), 2)
         res = []
 
-        for i in range(2**N):
-            if n & i == 0:
-                v = list('0'*(N-len(bin(i)[2:])) + bin(i)[2:])
-                res.append(list(map(int, v)))
+        for i in range(2**n):
+            if vector_in_int & i == 0:
+                nulling_vector = list('0'*(n-len(bin(i)[2:])) + bin(i)[2:])
+                res.append(list(map(int, nulling_vector)))
 
         return res[1:]
 
 
 if __name__ == '__main__':
-    MathUtility.fill_input_matrix_tst_gpu(BOOL_VECTOR_AMOUNT, BOOL_VECTOR_LENGTH)
+    MathUtility.get_matrix_with_test_data_gpu(BOOL_VECTOR_AMOUNT, BOOL_VECTOR_LENGTH)
     # print(numpy.loadtxt('func_in_input.txt'))
 
-    mat_list = MathUtility.fill_input_matrix_tst_cpu(BOOL_VECTOR_AMOUNT, BOOL_VECTOR_LENGTH)
+    mat_list = MathUtility.get_matrix_with_test_data_cpu(BOOL_VECTOR_AMOUNT, BOOL_VECTOR_LENGTH)
     print(mat_list)

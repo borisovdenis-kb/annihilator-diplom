@@ -1,12 +1,11 @@
 import random
-from time import time
-
 import numpy
 import pycuda.driver as drv
+from time import time
 from pycuda.compiler import SourceModule
-
 from src.constants import BOOL_VECTOR_LENGTH, BOOL_VECTOR_AMOUNT
 from src.utility.external_func import MathUtility
+
 
 mod = SourceModule("""
 #define vectors 100
@@ -51,7 +50,7 @@ _global__ void find_null_vectors(long* null_vectors, vector, int N)
 
 
 if __name__ == '__main__':
-    input_matrix = MathUtility.fill_input_matrix_tst_gpu(BOOL_VECTOR_AMOUNT, BOOL_VECTOR_LENGTH).astype(numpy.float32)
+    input_matrix = MathUtility.get_matrix_with_test_data_gpu(BOOL_VECTOR_AMOUNT, BOOL_VECTOR_LENGTH).astype(numpy.float32)
 
     get_zheg_poly = mod.get_function("get_zheg_poly")
 
@@ -65,8 +64,8 @@ if __name__ == '__main__':
 
     zheg_vectors = MathUtility.matrix_to_zheg_vectors(input_matrix, BOOL_VECTOR_AMOUNT, BOOL_VECTOR_LENGTH)
 
-    numpy.savetxt("txt_files/test_result.txt", input_matrix, fmt='%1.0f')
-    numpy.savetxt("txt_files/zheg_vectors.txt", zheg_vectors, fmt='%s')
+    numpy.savetxt("resources/output/test_result.txt", input_matrix, fmt='%1.0f')
+    numpy.savetxt("resources/output/zheg_vectors.txt", zheg_vectors, fmt='%s')
 
     zheg_vectors = numpy.loadtxt("txt_files/zheg_vectors.txt").astype(numpy.float32)
 
@@ -74,21 +73,21 @@ if __name__ == '__main__':
     # from
     test_null_vector = []
     for i in range(BOOL_VECTOR_LENGTH):
-        test_null_vector.append( random.randint(0, 1))
+        test_null_vector.append(random.randint(0, 1))
 
     print(test_null_vector)
     res_time = 0
     # to
 
     for i in range(len(zheg_vectors)):
-        vec1 = MathUtility.zheg_rdy2mul(zheg_vectors[i], BOOL_VECTOR_LENGTH)
-        vec2 = MathUtility.null_rdy2mul(test_null_vector, BOOL_VECTOR_LENGTH)
-        res = numpy.zeros_like(vec1, dtype = numpy.int)
+        bool_vector_a = MathUtility.zheg_rdy2mul(zheg_vectors[i], BOOL_VECTOR_LENGTH)
+        bool_vector_b = MathUtility.null_rdy2mul(test_null_vector, BOOL_VECTOR_LENGTH)
+        result = numpy.zeros_like(bool_vector_a, dtype=numpy.int)
 
         mul_zheg = mod.get_function("mul_zheg_poly")
         start_mul1 = time()
         mul_zheg(
-            drv.In(vec1.astype(numpy.int)), drv.In(vec2.astype(numpy.int)), drv.InOut(res),
+            drv.In(bool_vector_a.astype(numpy.int)), drv.In(bool_vector_b.astype(numpy.int)), drv.InOut(result),
             block=(32, 32, 1), grid=(32, 32)
         )
         end_mul1 = time()
