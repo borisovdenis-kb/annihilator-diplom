@@ -1,23 +1,25 @@
 class LFSR:
-    def __init__(self, config, sync_bit, init_state=[0]):
-        """ INITSTATE - необязательный параметр
-      он задает начальное состояние регистра
-      по умолчанию начальнео состояние регистра будет сплошь нулевым,
-      иное состояние устанавливается с помощью вектора [0,1,1,0,0...]
-      CONFIG - многочлен, описывающий конфигурацию РСЛОСа
-      т.е. это вектор, задающий позиции отводов в регистре
-      пример: [19,18,17,14]
-      SYNCBIT - номер синхронизирующего бита
+    def __init__(self, config, sync_bit=None, init_state=None):
+        """ 
+        :param config: - многочлен, описывающий конфигурацию РСЛОСа
+        т.е. это вектор, задающий позиции отводов в регистре
+        пример: [19,18,17,14]
+        
+        :param sync_bit: - номер синхронизирующего бита
+        
+        :param init_state: - необязательный параметр, который задает 
+        начальное состояние регистра. По умолчанию начальное состояние регистра 
+        будет сплошь нулевым, иное состояние устанавливается с помощью вектора
+        пример: [0,1,1,0,0...]
 
-      *** наш РСЛОС будет свигаться вправо.
-
-      """
-        self.length = config[0]  # длина регистра
-        self.config = config  # конфигурация
+        *** наш РСЛОС будет свигаться влево.
+        """
+        self.length = config[0]     # длина регистра
+        self.config = config        # конфигурация
         self.sync_bit = sync_bit
-        self.lfsr = []  # РСЛОС
+        self.lfsr = []              # РСЛОС
 
-        if init_state == [0]:
+        if not init_state:
             self.lfsr = [0] * self.length
         else:
             self.lfsr = init_state
@@ -25,13 +27,13 @@ class LFSR:
     def blank_shift(self):  # холостой сдвиг
         self.lfsr = [0] + self.lfsr[:-1]
 
-    def right_shift(self):  # свдиг с обратной связью
-        output = self.lfsr[-1]  # запоминаем выходной бит
-        F = 0
-        for pos in self.config:  # считаем функцию обратной связи
-            F ^= self.lfsr[pos - 1]
+    def left_shift(self):
+        output = self.lfsr[0]
+        feedback = 0
+        for pos in self.config:     # считаем функцию обратной связи
+            feedback ^= self.lfsr[pos - 1]
 
-        self.lfsr = [F] + self.lfsr[:-1]  # сдвигаем регистр на одну позицию вправо
+        self.lfsr = self.lfsr[1:] + [feedback]
 
         return output
 
@@ -100,11 +102,11 @@ class CipherA5:
             f = x & y | x & z | y & z
 
             if x == f:
-                r1_output = self.r1.right_shift()
+                r1_output = self.r1.left_shift()
             if y == f:
-                r2_output = self.r2.right_shift()
+                r2_output = self.r2.left_shift()
             if z == f:
-                r3_output = self.r3.right_shift()
+                r3_output = self.r3.left_shift()
 
             key_stream.append(r1_output ^ r2_output ^ r3_output)
 
@@ -140,8 +142,8 @@ class CipherA5:
 
 
 if __name__ == '__main__':
-    plain_text = input("Enter text: ")
-    key = input("Enter key (8-bit): ")
+    plain_text = "deniska"  # input("Enter text: ")
+    key = "popapopa"  # input("Enter key (8-bit): ")
     cipher = CipherA5(key=key)
 
     cipher_text = cipher.encrypt(plain_text=plain_text)
