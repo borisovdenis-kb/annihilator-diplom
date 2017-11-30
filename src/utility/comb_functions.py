@@ -5,8 +5,6 @@ class EquationSystemGenerator:
     def __init__(self):
         super().__init__()
 
-    
-
 
 def n_choose_k(n, r):
     f = math.factorial
@@ -26,4 +24,3 @@ def count_equation_number_for_mcfsr(*register_length):
 if __name__ == "__main__":
     print(n_choose_k(5, 2))
     print(count_equation_number_for_mcfsr(19, 22, 23))
-    print(2**88)

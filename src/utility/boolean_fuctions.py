@@ -1,18 +1,33 @@
-import codecs
-
+import itertools
 import sympy
 import re
 from multipledispatch import dispatch
+from src.ciphers.ciphera5 import LFSR
 
 
-# class EquationSystemGenerator:
-#     def __init__(self, *lfsr_list):
-#         """
-#         :param lfsr_list: list of LFSR objects
-#         """
-#         self.lfsr_list = lfsr_list
-#
-#     def init_lfsr_with_variable(self):
+class EquationSystemGenerator:
+
+    ALPHABET = "xyztqplvudhabc"
+
+    def __init__(self, *lfsr_list):
+        """
+        :param lfsr_list: list of LFSR objects
+        """
+        self.lfsr_list = lfsr_list
+        self.variables = self.generate_variables()
+
+    def init_lfsr_with_variable(self):
+        for i in range(len(self.lfsr_list)):
+            self.lfsr_list[i].lfsr = self.variables[i]
+
+    def generate_variables(self):
+        var_lists = []
+        for i in range(len(self.lfsr_list)):
+            var_lists.append([])
+            for j in range(self.lfsr_list[i].length):
+                var_lists[i].append(EquationSystemGenerator.ALPHABET[i] + str(j))
+        return var_lists
+
 
 
 def set_truth_table():
@@ -169,23 +184,31 @@ def get_all_nulling_vectors(vector):
     return res[1:]
 
 
-if __name__ == '__main__':
-    TT = set_truth_table()
-    func_vector = TT[-1]
-
-    nulling_vectors = get_all_nulling_vectors(func_vector)
-    print('All nulling_vectors : ', nulling_vectors)
-
-    func_ANF = build_zhegalkin_polynomial(TT[-1], TT[0], TT[1])
-    annig_anf_list = [build_zhegalkin_polynomial(v, TT[0], TT[1]) for v in nulling_vectors]
-
-    print('ANF of func : ', func_ANF)
-    print('ANFs of nulling vectors : ', annig_anf_list)
-
-    for f in annig_anf_list:
-        print("multiplication: %s * %s = %s" % (func_ANF, f, multiply_polynomials(func_ANF, f, TT[0])))
+# if __name__ == '__main__':
+#     TT = set_truth_table()
+#     func_vector = TT[-1]
+#
+#     nulling_vectors = get_all_nulling_vectors(func_vector)
+#     print('All nulling_vectors : ', nulling_vectors)
+#
+#     func_ANF = build_zhegalkin_polynomial(TT[-1], TT[0], TT[1])
+#     annig_anf_list = [build_zhegalkin_polynomial(v, TT[0], TT[1]) for v in nulling_vectors]
+#
+#     print('ANF of func : ', func_ANF)
+#     print('ANFs of nulling vectors : ', annig_anf_list)
+#
+#     for f in annig_anf_list:
+#         print("multiplication: %s * %s = %s" % (func_ANF, f, multiply_polynomials(func_ANF, f, TT[0])))
 
 #
 # if __name__ == '__main__':
 #     res = multiply_polynomials([0, 1, 1, 0], [0, 0, 0, 1])
 #     print(res)
+
+if __name__ == "__main__":
+    lfsr_one = LFSR([5, 3])
+    lfsr_two = LFSR([7, 4])
+    system = EquationSystemGenerator(lfsr_one, lfsr_two)
+    system.generate_variables()
+    system.init_lfsr_with_variable()
+    print(system.lfsr_list)

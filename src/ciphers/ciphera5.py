@@ -1,11 +1,11 @@
 class LFSR:
-    def __init__(self, config, sync_bit=None, init_state=None):
+    def __init__(self, config, sync_bit_idx=None, init_state=None):
         """ 
         :param config: - многочлен, описывающий конфигурацию РСЛОСа
         т.е. это вектор, задающий позиции отводов в регистре
         пример: [19,18,17,14]
         
-        :param sync_bit: - номер синхронизирующего бита
+        :param sync_bit_idx: - номер синхронизирующего бита
         
         :param init_state: - необязательный параметр, который задает 
         начальное состояние регистра. По умолчанию начальное состояние регистра 
@@ -14,15 +14,14 @@ class LFSR:
 
         *** наш РСЛОС будет свигаться влево.
         """
-        self.length = config[0]     # длина регистра
-        self.config = config        # конфигурация
-        self.sync_bit = sync_bit
-        self.lfsr = []              # РСЛОС
+        self.length = config[0]         # длина регистра
+        self.__config = config          # конфигурация
+        self.__sync_bit_idx = sync_bit_idx
 
         if not init_state:
-            self.lfsr = [0] * self.length
+            self.__lfsr = [0] * self.length
         else:
-            self.lfsr = init_state
+            self.__lfsr = init_state
 
     def blank_shift(self):  # холостой сдвиг
         self.lfsr = [0] + self.lfsr[:-1]
@@ -37,8 +36,32 @@ class LFSR:
 
         return output
 
-    def get_sync_bit(self):
-        return self.lfsr[self.sync_bit]
+    @property
+    def lfsr(self):
+        return self.__lfsr
+
+    @lfsr.setter
+    def lfsr(self, vector):
+        if len(vector) == self.length:
+            self.__lfsr = vector
+        else:
+            raise ValueError(
+                "len of new vector must be the same as len of lfsr"
+            )
+
+    def get_sync_bit_value(self):
+        return self.__lfsr[self.__sync_bit_idx]
+
+    @property
+    def sync_bit_idx(self):
+        return self.__sync_bit_idx
+
+    @sync_bit_idx.setter
+    def sync_bit_idx(self, idx):
+        self.__sync_bit_idx = idx
+
+    def __repr__(self):
+        return self.__lfsr.__repr__()
 
 
 class BitConverter:
@@ -95,9 +118,9 @@ class CipherA5:
         key_stream = []
         for i in range(len(text)):
             r1_output, r2_output, r3_output = 0, 0, 0
-            x = self.r1.get_sync_bit()
-            y = self.r2.get_sync_bit()
-            z = self.r3.get_sync_bit()
+            x = self.r1.get_sync_bit_value()
+            y = self.r2.get_sync_bit_value()
+            z = self.r3.get_sync_bit_value()
 
             f = x & y | x & z | y & z
 
