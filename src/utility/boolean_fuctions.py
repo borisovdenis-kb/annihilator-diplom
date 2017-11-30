@@ -1,5 +1,18 @@
+import codecs
+
 import sympy
+import re
 from multipledispatch import dispatch
+
+
+# class EquationSystemGenerator:
+#     def __init__(self, *lfsr_list):
+#         """
+#         :param lfsr_list: list of LFSR objects
+#         """
+#         self.lfsr_list = lfsr_list
+#
+#     def init_lfsr_with_variable(self):
 
 
 def set_truth_table():
@@ -86,33 +99,59 @@ def multiply_polynomials(vector1, vector2):
     """
     res = [0] * len(vector1)
     for i in range(len(vector1)):
-            res[i] = vector1[i] & vector2[i]
+        res[i] = vector1[i] & vector2[i]
     return res
 
 
 @dispatch(str, str, list)
-def multiply_polynomials(p1, p2, VARS):
-    # функция перемножает многочлены Жег. Р1 и Р2
-    # и делает всевозможные упрощения получившегося произведения.
-    states = [p2]
-    res = []
-    s = '(' + p1 + ')*(' + p2 + ')'
-    P3 = sympy.expand(s)
-    states.append(P3)
+def multiply_polynomials(p1, p2, var_set):
+    """
+    :param p1: str - polynomial ["x*y"]
+    :param p2: str - polynomial ["x*y + x"]
+    :param var_set: list ["x", "y"]
+    :return: simplified result of multiplication p1 and p2
+    """
+    poly_multiplication = '(' + p1 + ')*(' + p2 + ')'
+    res = simplify_poly(poly_multiplication, var_set)
+    return res
 
-    for v in VARS:
-        P3 = P3.replace('%s**2' % v, v)
 
-    states.append(P3)
+def execute(poly):
+    res = sympy.expand(poly)
+    return res.__repr__()
 
-    P3 = P3.__repr__()
-    for exp in P3.split(' + '):
-        n = exp.split('*')[0]
+
+# noinspection PyTypeChecker
+def simplify_poly(poly, var_set):
+    res = execute(poly)
+
+    simplification_steps = [res]
+
+    for v in var_set:
+        res = re.sub(r'%s\*\*\d+' % v, v, res)
+
+    res = execute(res)
+
+    simplification_steps.append(res)
+
+    monom_list = []
+    for monom in res.split(' + '):
+        n = monom.split("*")[0]
         if n.isdigit() and int(n) % 2 == 1:
-            res.append(''.join(exp[1:]))
+            monom_list.append(''.join(monom[1:]))
 
-    states.append('+'.join(res).replace('', '0'))
-    return states
+    res = '+'.join(monom_list).replace('', '0')
+
+    simplification_steps.append(res)
+
+    show_simplification(simplification_steps)
+
+    return res
+
+
+def show_simplification(steps):
+    print("simplification: ", end="")
+    print(" -> ".join(steps))
 
 
 def get_all_nulling_vectors(vector):
@@ -138,16 +177,13 @@ if __name__ == '__main__':
     print('All nulling_vectors : ', nulling_vectors)
 
     func_ANF = build_zhegalkin_polynomial(TT[-1], TT[0], TT[1])
-    ANFs = [build_zhegalkin_polynomial(v, TT[0], TT[1]) for v in nulling_vectors]
+    annig_anf_list = [build_zhegalkin_polynomial(v, TT[0], TT[1]) for v in nulling_vectors]
 
     print('ANF of func : ', func_ANF)
-    print('ANFs of nulling vectors : ', ANFs)
+    print('ANFs of nulling vectors : ', annig_anf_list)
 
-    Annigs = []
-    for f in ANFs:
-        Annigs.append(multiply_polynomials(func_ANF, f, TT[0]))
-    for anig in Annigs:
-        show_annig(func_ANF, anig)
+    for f in annig_anf_list:
+        print("multiplication: %s * %s = %s" % (func_ANF, f, multiply_polynomials(func_ANF, f, TT[0])))
 
 #
 # if __name__ == '__main__':
