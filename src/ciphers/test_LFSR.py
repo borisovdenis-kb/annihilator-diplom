@@ -8,6 +8,6 @@ def popa(n):
 
     print()
     for i in range(n):
-        print(str(lfsr.left_shift()) + "\t", end="")
+        print(str(lfsr.bit_left_shift()) + "\t", end="")
 
 popa(15)

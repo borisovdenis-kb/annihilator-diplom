@@ -26,10 +26,20 @@ class LFSR:
     def blank_shift(self):  # холостой сдвиг
         self.lfsr = [0] + self.lfsr[:-1]
 
+    def bit_left_shift(self):
+        output = self.lfsr[0]
+        feedback = 0
+        for pos in self.__config:           # считаем функцию обратной связи
+            feedback ^= self.lfsr[pos - 1]
+
+        self.lfsr = self.lfsr[1:] + [feedback]
+
+        return output
+
     def left_shift(self):
         output = self.lfsr[0]
         feedback = 0
-        for pos in self.config:     # считаем функцию обратной связи
+        for pos in self.__config:  # считаем функцию обратной связи
             feedback ^= self.lfsr[pos - 1]
 
         self.lfsr = self.lfsr[1:] + [feedback]
@@ -125,11 +135,11 @@ class CipherA5:
             f = x & y | x & z | y & z
 
             if x == f:
-                r1_output = self.r1.left_shift()
+                r1_output = self.r1.bit_left_shift()
             if y == f:
-                r2_output = self.r2.left_shift()
+                r2_output = self.r2.bit_left_shift()
             if z == f:
-                r3_output = self.r3.left_shift()
+                r3_output = self.r3.bit_left_shift()
 
             key_stream.append(r1_output ^ r2_output ^ r3_output)
 
