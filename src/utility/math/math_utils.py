@@ -1,7 +1,8 @@
 import sympy
 import re
 from multipledispatch import dispatch
-from src.ciphers.ciphera5 import LFSR
+from src.ciphers import ciphera5
+from src.utility.math import boolfunc
 
 
 class EquationSystemGenerator:
@@ -15,22 +16,37 @@ class EquationSystemGenerator:
         example: r1*r2 + r2
         """
         self.lfsr_list = lfsr_list
-        self.variables = self.generate_variables()
+        self.variables = self.__generate_variables()
         self.combine_func = combine_func
 
-    # def generate
+    def generate_equation_system(self, iteration_amount):
+        self.__generate_variables()
+        self.__init_lfsr_with_variables()
 
-    def init_lfsr_with_variables(self):
+        n = len(self.lfsr_list)
+        system = [[] for i in range(n)]
+
+        for i in range(iteration_amount):
+            for j in range(n):
+                system[j].append(self.lfsr_list[j].func_left_shift())
+            # execute combine function
+        return system
+
+    def __init_lfsr_with_variables(self):
         for i in range(len(self.lfsr_list)):
             self.lfsr_list[i].lfsr = self.variables[i]
 
-    def generate_variables(self):
-        var_lists = []
+    def __generate_variables(self):
+        res_var_lists = []
         for i in range(len(self.lfsr_list)):
-            var_lists.append([])
+            tmp_var_list = []
             for j in range(self.lfsr_list[i].length):
-                var_lists[i].append(EquationSystemGenerator.ALPHABET[i] + str(j))
-        return var_lists
+                tmp_var_list.append(EquationSystemGenerator.ALPHABET[i] + str(j))
+
+            res_var_lists.append([])
+            for j in range(len(tmp_var_list)):
+                res_var_lists[i].append(boolfunc.SymbolicBoolFunction(tmp_var_list, tmp_var_list[j]))
+        return res_var_lists
 
 
 def set_truth_table():
@@ -179,7 +195,7 @@ def simplify_poly(poly, var_set):
         res = "0"
 
     simplification_steps.append(res)
-    show_simplification(simplification_steps)
+    # show_simplification(simplification_steps)
 
     return res
 
@@ -204,32 +220,31 @@ def get_all_nulling_vectors(vector):
     return res[1:]
 
 
-if __name__ == '__main__':
-    TT = set_truth_table()
-    func_vector = TT[-1]
-
-    nulling_vectors = get_all_nulling_vectors(func_vector)
-    print('All nulling_vectors : ', nulling_vectors)
-
-    func_ANF = build_zhegalkin_polynomial(TT[-1], TT[0], TT[1])
-    annig_anf_list = [build_zhegalkin_polynomial(v, TT[0], TT[1]) for v in nulling_vectors]
-
-    print('ANF of func : ', func_ANF)
-    print('ANFs of nulling vectors : ', annig_anf_list)
-
-    for f in annig_anf_list:
-        print("multiplication: %s * %s = %s" % (func_ANF, f, multiply_polynomials(func_ANF, f, TT[0])))
-
+# if __name__ == '__main__':
+#     TT = set_truth_table()
+#     func_vector = TT[-1]
+#
+#     nulling_vectors = get_all_nulling_vectors(func_vector)
+#     print('All nulling_vectors : ', nulling_vectors)
+#
+#     func_ANF = build_zhegalkin_polynomial(TT[-1], TT[0], TT[1])
+#     annig_anf_list = [build_zhegalkin_polynomial(v, TT[0], TT[1]) for v in nulling_vectors]
+#
+#     print('ANF of func : ', func_ANF)
+#     print('ANFs of nulling vectors : ', annig_anf_list)
+#
+#     for f in annig_anf_list:
+#         print("multiplication: %s * %s = %s" % (func_ANF, f, multiply_polynomials(func_ANF, f, TT[0])))
+#
 
 # if __name__ == '__main__':
 #     res = multiply_polynomials([0, 1, 1, 0], [0, 0, 0, 1])
 #     print(res)
 
 
-# if __name__ == "__main__":
-#     lfsr_one = LFSR([5, 3])
-#     lfsr_two = LFSR([7, 4])
-#     system = EquationSystemGenerator(lfsr_one, lfsr_two)
-#     system.generate_variables()
-#     system.init_lfsr_with_variables()
-#     print(system.lfsr_list)
+if __name__ == "__main__":
+    # lfsr_one = LFSR([5, 3])
+    # lfsr_two = LFSR([7, 4])
+    system_generator = EquationSystemGenerator(ciphera5.LFSR([4, 1]))
+    for i, func in enumerate(system_generator.generate_equation_system(20)[0]):
+        print("%s\t%s" % (i, func))

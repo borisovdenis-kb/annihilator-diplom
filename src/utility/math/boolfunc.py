@@ -1,5 +1,6 @@
-from src.utility.math import math_utils
+# from src.utility.math import math_utils
 from abc import ABCMeta, abstractmethod
+from src.utility.math import math_utils
 
 
 class BoolFunction:
@@ -59,7 +60,7 @@ class VectorBoolFunction(BoolFunction):
         res = [0] * len(self.vector)
         for i in range(len(self.vector)):
             res[i] = self.vector[i] ^ other[i]
-        return res
+        return VectorBoolFunction(self.var_list, res)
 
     def __mul__(self, other):
         """
@@ -71,12 +72,18 @@ class VectorBoolFunction(BoolFunction):
         res = [0] * len(self.vector)
         for i in range(len(self.vector)):
             res[i] = self.vector[i] & other[i]
-        return res
+        return VectorBoolFunction(self.var_list, res)
 
     def __getitem__(self, idx):
         if idx > len(self.__vector) or idx < 0:
             raise IndexError
         return self.__vector[idx]
+
+    def __str__(self):
+        return self.vector.__str__()
+
+    def __repr__(self):
+        return self.vector.__repr__()
 
     @property
     def vector(self):
@@ -103,10 +110,22 @@ class SymbolicBoolFunction(BoolFunction):
         self.func = func
 
     def __xor__(self, other):
-        return math_utils.add_polynomials(self.func, other.func, self.var_list)
+        return SymbolicBoolFunction(
+            self.var_list,
+            math_utils.add_polynomials(self.func, other.func, self.var_list)
+        )
 
     def __mul__(self, other):
-        return math_utils.multiply_polynomials(self.func, other.func, self.var_list)
+        return SymbolicBoolFunction(
+            self.var_list,
+            math_utils.multiply_polynomials(self.func, other.func, self.var_list)
+        )
+
+    def __str__(self):
+        return self.func
+
+    def __repr__(self):
+        return self.func
 
     @property
     def func(self):
@@ -121,13 +140,17 @@ if __name__ == "__main__":
     print("Boolean function in vector representation:")
     bool_vector_one = VectorBoolFunction(['x', 'y'], [0, 1, 1, 0])
     bool_vector_two = VectorBoolFunction(['x', 'y'], [0, 0, 1, 0])
+    print(bool_vector_one, " * ", bool_vector_two)
     print("mul:", bool_vector_one * bool_vector_two)
+    print(bool_vector_one, " + ", bool_vector_two)
     print("add:", bool_vector_one ^ bool_vector_two)
 
     print()
 
     print("Boolean function in symbolic representation:")
-    bool_func_one = SymbolicBoolFunction(['x', 'y'], "x + y")
-    bool_func_two = SymbolicBoolFunction(['x', 'y'], "x + x*y")
+    bool_func_one = SymbolicBoolFunction(['x', 'y'], "x + x*y")
+    bool_func_two = SymbolicBoolFunction(['x', 'y'], "0")
+    print(bool_func_one, " * ", bool_func_two)
     print("mul:", bool_func_one * bool_func_two)
+    print(bool_func_one, " + ", bool_func_two)
     print("add:", bool_func_one ^ bool_func_two)

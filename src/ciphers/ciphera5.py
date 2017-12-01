@@ -1,3 +1,6 @@
+from src.utility.math import boolfunc
+
+
 class LFSR:
     def __init__(self, config, sync_bit_idx=None, init_state=None):
         """ 
@@ -29,18 +32,19 @@ class LFSR:
     def bit_left_shift(self):
         output = self.lfsr[0]
         feedback = 0
-        for pos in self.__config:           # считаем функцию обратной связи
+        for pos in self.__config:  # считаем функцию обратной связи
             feedback ^= self.lfsr[pos - 1]
 
         self.lfsr = self.lfsr[1:] + [feedback]
 
         return output
 
-    def left_shift(self):
+    def func_left_shift(self):
         output = self.lfsr[0]
-        feedback = 0
-        for pos in self.__config:  # считаем функцию обратной связи
-            feedback ^= self.lfsr[pos - 1]
+        feedback = boolfunc.SymbolicBoolFunction(output.var_list, "0")
+
+        for pos in self.__config:           # считаем функцию обратной связи
+            feedback = feedback ^ self.lfsr[pos - 1]
 
         self.lfsr = self.lfsr[1:] + [feedback]
 
