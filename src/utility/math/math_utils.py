@@ -17,36 +17,53 @@ class EquationSystemGenerator:
         """
         self.lfsr_list = lfsr_list
         self.variables = self.__generate_variables()
-        self.combine_func = combine_func
+
+        if len(lfsr_list) >= 2 and combine_func is None:
+            raise ValueError(
+                "generator with 2 and more lfsr must has a combine function"
+            )
+        else:
+            self.combine_func = combine_func
 
     def generate_equation_system(self, iteration_amount):
         self.__generate_variables()
         self.__init_lfsr_with_variables()
 
         n = len(self.lfsr_list)
-        system = [[] for i in range(n)]
 
+        system = []
         for i in range(iteration_amount):
+            lfsr_outputs = []
             for j in range(n):
-                system[j].append(self.lfsr_list[j].func_left_shift())
-            # execute combine function
+                lfsr_outputs.append(self.lfsr_list[j].func_left_shift())
+
+            if self.combine_func is not None:
+                system.append(self.__execute_combine_function(lfsr_outputs))
+            else:
+                system.append(lfsr_outputs[0])
+
         return system
+
+    def __execute_combine_function(self, func_list):
+        expression = self.combine_func
+        for i, f in enumerate(func_list):
+            expression = expression.replace("r%s" % (i + 1), "(%s)" % f)
+        res = simplify_poly(expression, sum(self.variables, []))
+        return res
 
     def __init_lfsr_with_variables(self):
         for i in range(len(self.lfsr_list)):
-            self.lfsr_list[i].lfsr = self.variables[i]
+            self.lfsr_list[i].lfsr = [
+                boolfunc.SymbolicBoolFunction(self.variables[i], f) for f in self.variables[i]
+            ]
 
     def __generate_variables(self):
-        res_var_lists = []
+        var_lists = []
         for i in range(len(self.lfsr_list)):
-            tmp_var_list = []
+            var_lists.append([])
             for j in range(self.lfsr_list[i].length):
-                tmp_var_list.append(EquationSystemGenerator.ALPHABET[i] + str(j))
-
-            res_var_lists.append([])
-            for j in range(len(tmp_var_list)):
-                res_var_lists[i].append(boolfunc.SymbolicBoolFunction(tmp_var_list, tmp_var_list[j]))
-        return res_var_lists
+                var_lists[i].append(EquationSystemGenerator.ALPHABET[i] + str(j))
+        return var_lists
 
 
 def set_truth_table():
@@ -243,8 +260,16 @@ def get_all_nulling_vectors(vector):
 
 
 if __name__ == "__main__":
-    # lfsr_one = LFSR([5, 3])
-    # lfsr_two = LFSR([7, 4])
-    system_generator = EquationSystemGenerator(ciphera5.LFSR([4, 1]))
-    for i, func in enumerate(system_generator.generate_equation_system(20)[0]):
+    print("test for generator with one lfsr")
+    system_generator = EquationSystemGenerator(ciphera5.LFSR([4, 1], 4))
+    for i, func in enumerate(system_generator.generate_equation_system(40)):
+        print("%s\t%s" % (i, func))
+
+    print()
+    print("test for combine generator")
+    lfsr_one = ciphera5.LFSR([2, 1], 2)
+    lfsr_two = ciphera5.LFSR([2, 1], 3)
+    system_generator = EquationSystemGenerator(lfsr_one, lfsr_two, combine_func="r1*r2 + r2")
+
+    for i, func in enumerate(system_generator.generate_equation_system(40)):
         print("%s\t%s" % (i, func))

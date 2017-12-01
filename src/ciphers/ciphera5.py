@@ -2,12 +2,13 @@ from src.utility.math import boolfunc
 
 
 class LFSR:
-    def __init__(self, config, sync_bit_idx=None, init_state=None):
+    def __init__(self, config, length, sync_bit_idx=None, init_state=None):
         """ 
         :param config: - многочлен, описывающий конфигурацию РСЛОСа
         т.е. это вектор, задающий позиции отводов в регистре
         пример: [19,18,17,14]
         
+        :param length: - длина регистра
         :param sync_bit_idx: - номер синхронизирующего бита
         
         :param init_state: - необязательный параметр, который задает 
@@ -17,8 +18,8 @@ class LFSR:
 
         *** наш РСЛОС будет свигаться влево.
         """
-        self.length = config[0]         # длина регистра
-        self.__config = config          # конфигурация
+        self.length = length
+        self.__config = config
         self.__sync_bit_idx = sync_bit_idx
 
         if not init_state:
