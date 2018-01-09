@@ -5,8 +5,10 @@ from src.ciphers import ciphera5
 from src.utility.math import boolfunc
 
 
-class EquationSystemGenerator:
-
+class SCEquationSystemGenerator:
+    """
+    Generator of equation system for Stream Cipher based on combine generator.
+    """
     ALPHABET = "xyztqplvudhabc"
 
     def __init__(self, *lfsr_list, combine_func=None):
@@ -62,7 +64,7 @@ class EquationSystemGenerator:
         for i in range(len(self.lfsr_list)):
             var_lists.append([])
             for j in range(self.lfsr_list[i].length):
-                var_lists[i].append(EquationSystemGenerator.ALPHABET[i] + str(j))
+                var_lists[i].append(SCEquationSystemGenerator.ALPHABET[i] + str(j))
         return var_lists
 
 
@@ -88,9 +90,9 @@ def set_truth_table():
     return [var, var_values, f]
 
 
-def build_zhegalkin_polynomial(vector, VARS, var_values):
+def build_zhegalkin_poly(vector, VARS, var_values):
     res = []
-    coef = find_zhegalkin_polynomial_coefficients(vector)
+    coef = find_zhegalkin_poly_coefficients(vector)
     if coef[0] == 1:
         res = [str(coef[0])]
     for i, values in enumerate(var_values):
@@ -104,7 +106,7 @@ def build_zhegalkin_polynomial(vector, VARS, var_values):
     return '+'.join([s for s in res if s])
 
 
-def find_zhegalkin_polynomial_coefficients(f):
+def find_zhegalkin_poly_coefficients(f):
     # нахождения коэффициентов многочлена Жег.
     # методом Паскаля
     # на вход принимает вектор значений булевой функции f
@@ -237,39 +239,39 @@ def get_all_nulling_vectors(vector):
     return res[1:]
 
 
-# if __name__ == '__main__':
-#     TT = set_truth_table()
-#     func_vector = TT[-1]
-#
-#     nulling_vectors = get_all_nulling_vectors(func_vector)
-#     print('All nulling_vectors : ', nulling_vectors)
-#
-#     func_ANF = build_zhegalkin_polynomial(TT[-1], TT[0], TT[1])
-#     annig_anf_list = [build_zhegalkin_polynomial(v, TT[0], TT[1]) for v in nulling_vectors]
-#
-#     print('ANF of func : ', func_ANF)
-#     print('ANFs of nulling vectors : ', annig_anf_list)
-#
-#     for f in annig_anf_list:
-#         print("multiplication: %s * %s = %s" % (func_ANF, f, multiply_polynomials(func_ANF, f, TT[0])))
-#
+if __name__ == '__main__':
+    TT = set_truth_table()
+    func_vector = TT[-1]
+
+    nulling_vectors = get_all_nulling_vectors(func_vector)
+    print('All nulling_vectors : ', nulling_vectors)
+
+    func_ANF = build_zhegalkin_poly(TT[-1], TT[0], TT[1])
+    annig_anf_list = [build_zhegalkin_poly(v, TT[0], TT[1]) for v in nulling_vectors]
+
+    print('ANF of func : ', func_ANF)
+    print('ANFs of nulling vectors : ', annig_anf_list)
+
+    for f in annig_anf_list:
+        print("multiplication: %s * %s = %s" % (func_ANF, f, multiply_polynomials(func_ANF, f, TT[0])))
+
 
 # if __name__ == '__main__':
 #     res = multiply_polynomials([0, 1, 1, 0], [0, 0, 0, 1])
 #     print(res)
 
 
-if __name__ == "__main__":
-    print("test for generator with one lfsr")
-    system_generator = EquationSystemGenerator(ciphera5.LFSR([4, 1], 4))
-    for i, func in enumerate(system_generator.generate_equation_system(40)):
-        print("%s\t%s" % (i, func))
-
-    print()
-    print("test for combine generator")
-    lfsr_one = ciphera5.LFSR([2, 1], 2)
-    lfsr_two = ciphera5.LFSR([2, 1], 3)
-    system_generator = EquationSystemGenerator(lfsr_one, lfsr_two, combine_func="r1*r2 + r2")
-
-    for i, func in enumerate(system_generator.generate_equation_system(40)):
-        print("%s\t%s" % (i, func))
+# if __name__ == "__main__":
+#     print("test for generator with one lfsr")
+#     system_generator = SCEquationSystemGenerator(ciphera5.LFSR([4, 1], 4))
+#     for i, func in enumerate(system_generator.generate_equation_system(40)):
+#         print("%s\t%s" % (i, func))
+#
+#     print()
+#     print("test for combine generator")
+#     lfsr_one = ciphera5.LFSR([2, 1], 2)
+#     lfsr_two = ciphera5.LFSR([2, 1], 3)
+#     system_generator = SCEquationSystemGenerator(lfsr_one, lfsr_two, combine_func="r1*r2 + r2")
+#
+#     for i, func in enumerate(system_generator.generate_equation_system(40)):
+#         print("%s\t%s" % (i, func))
